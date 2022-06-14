@@ -1,0 +1,27 @@
+{
+    "float_info": {
+        "endip": "172.18.255.254",
+        "ispingreqd": true,
+        "startip": "172.18.0.2",
+        "nexthop": "172.18.0.1",
+        "mask": 16,
+        "extif": "ens192",
+        "label": {
+            "name": "Default",
+            "description": "Floating network range set up during install"
+        }
+    },
+    "containerdisks": [
+        "/dev/sdb"
+    ],
+    "posix_client_type": "basic",
+    "tenant_network_isolation": true,
+    "custom_install_name": null,
+    "kerberos": false,
+    "intgatewayip": "172.18.0.1",
+    "fqdn_assignment_mode": "index_sequential",
+    "routable_network": false,
+    "bdshared_global_bddomain": "hpecplocal",
+    "bdshared_global_bdprefix": "hpecp-",
+    "sharedfstype": "default_mapr"
+}

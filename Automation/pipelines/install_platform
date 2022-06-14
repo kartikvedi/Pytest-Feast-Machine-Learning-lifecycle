@@ -1,0 +1,109 @@
+node('master'){
+    
+    build_ok = true
+    currentBuild.displayName = "#${BUILD_ID} ${Platform} (${branch_name}) ECP #${ecp_build_id}"
+
+    try{
+        stage ('OS/InstallBin') {
+            build job: 'InstallBin', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_install_platform.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+        
+    try{
+        stage ('Gateway/LoadBalancer') {
+            build job: 'ConfigureGateway', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_configure_gateway.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+
+    try{
+        stage ('Hosts') {
+            build job: 'ConfigureHosts', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_configure_hosts.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+    
+    try{
+        stage ('AuthSettings') {
+            build job: 'ConfigureAuthSettings', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_configure_authsettings.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+
+    try{
+        stage ('Cluster') {
+            build job: 'CreateCluster', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_create_cluster.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    try{
+        stage ('Tenant') {
+            build job: 'CreateTenant', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_create_tenant.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    try{
+        stage ('Training') {
+            build job: 'CreateTraining', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_create_training.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    try{
+        stage ('appMLFlow') {
+            build job: 'CreateMLFlow', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_create_mlflow.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    if(build_ok) {
+        currentBuild.result = "SUCCESS"
+    } else {
+        currentBuild.result = "FAILURE"
+    }
+}

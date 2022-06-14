@@ -1,0 +1,70 @@
+library "file-workaround"
+node('master') {
+    currentBuild.displayName = "#${BUILD_ID} ${Platform} (${branch_name})"
+    
+    stage("Config upload") {
+        if (env.Platform =~ /^$/){
+            echo 'Download file directly from user'
+            unstashParam "platform_current"
+        } else {
+            if (env.Platform =~ /^\d+$/){
+                echo 'Download artifact from another JOB'
+                copyArtifacts fingerprintArtifacts: true, projectName: 'CreateConfig', selector: specific("${Platform}")
+            } else {
+                echo 'Generate config artifact locally using SCM profile'
+            }
+        }
+    }
+
+    try {
+        stage('Prepare'){
+            dir('pyezml'){
+                    checkout([$class: 'GitSCM', branches: [[name: '*/${branch_name}']], userRemoteConfigs: [[url: 'git@github.hpe.com:hpe/MLOPsAutoJobs.git']]])
+                    sh '''
+                    rm -f images/*.png
+                    rm -f *.log
+
+                    '''
+            }
+        }
+       stage('Run'){
+            dir('pyezml'){            
+                    sh '''
+                    export LOCAL_DRIVER=False
+                    export PYTHONHTTPSVERIFY=0
+                    if [ "$Platform" ]; then
+                        if [ -f "configs/platform_${Platform}.json" ]; then
+                            echo "Generate SCM platform config"
+                            python3 ./core/config.py --input_json=configs/platform_${Platform}.json --output platform_current.json
+                        else
+                            echo "Copy downstream generated config"
+                            cp -f platform_output.json platform_current.json
+                        fi
+                    else
+                        echo "Copy uploaded platform"
+                        pwd
+                        ls -l
+                        ls -l ..
+                        cp -f ../platform_current.json .
+                    fi
+                    pytest -x -v -s --durations=0 --config platform_current.json ${test_script} --junitxml=junit_report.xml
+                    '''
+            }
+            notebook_hash = sh(script: """
+                if [ -f "pyezml/pipeline.dat" ]; then
+                    cat pyezml/pipeline.dat
+                else
+                    echo "---"
+                fi
+             """, returnStdout: true).trim()
+            currentBuild.description = "${notebook_hash}"
+        }
+    } catch (e){
+        throw e
+    } finally {
+        stage('Report'){
+            junit 'pyezml/junit_report.xml'
+            archiveArtifacts artifacts: 'pyezml/images/**/*.png, pyezml/*.log, pyezml/platform_current.json, pyezml/pipeline.dat', fingerprint: true, allowEmptyArchive: true
+        }
+    }
+}

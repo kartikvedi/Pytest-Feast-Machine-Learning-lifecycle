@@ -1,0 +1,37 @@
+node('master') {
+	currentBuild.displayName = "#${BUILD_ID} (${branch_name})"
+    try {
+        stage('Prepare'){
+            dir('pyezml'){
+					checkout([$class: 'GitSCM', branches: [[name: '*/${branch_name}']], userRemoteConfigs: [[url: 'git@github.hpe.com:hpe/MLOPsAutoJobs.git']]])
+                    sh '''
+                    rm -f images/*.png
+                    rm -f *.log
+                    if ! [ -f ./venv ];then
+                        python3 -m venv venv
+                    fi
+                    . venv/bin/activate
+                    pip --proxy http://web-proxy.corp.hpecorp.net:8080 install -r requirements.txt
+                    '''
+            }
+        }
+        stage('Run'){
+            dir('pyezml'){            
+                    sh '''
+                    . venv/bin/activate
+                    export LOCAL_DRIVER=False
+					rm -f platform_output.json
+					python ./core/config.py --controller=${controller_ip} --gateway=${gateway} --workers=${workers} --masters=${masters} --prefix=${prefix} --output platform_output.json --platform_user=${platform_user} --platform_password=${platform_password} --ecp_build_id=${ecp_build_id}
+					cat platform_output.json
+
+                    '''
+            }
+        }
+    } catch (e){
+        throw e
+    } finally {
+        stage('Report'){
+            archiveArtifacts artifacts: 'pyezml/platform_output.json, pyezml/*.log', fingerprint: true, allowEmptyArchive: true
+        }
+    }
+}

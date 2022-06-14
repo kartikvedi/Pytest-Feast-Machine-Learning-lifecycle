@@ -1,0 +1,110 @@
+{
+  "url": "http://16.143.21.125",
+  "controller_ip": "16.143.21.125",
+  "gateway_lb_ip": "16.143.21.126",
+  "gateway_lb_hostname": "mip-bd-vm182.mip.storage.hpecorp.net",
+  "login": "dev1",
+  "password": "admin123",
+  "admin_login": "admin",
+  "admin_password": "admin123",
+  "login_timeout_sec": 15,
+  "cluster_creation_max_timeout_seconds": 3600,
+  "platform_bin_url": "http://bd-artifactory.mip.storage.hpecorp.net/ui/api/v1/download?repoKey=hpe-cp-eng-builds&path=debug%252F5.4%252Fcentos7%252F219%252Fhpe-cp-rhel-debug-5.4-219.bin",
+  "logs": [
+    {
+      "cmd": "kubectl get pods -A",
+      "file": "get_pods.log"
+    },
+    {
+      "cmd": "kubectl get svc -A",
+      "file": "get_svc.log"
+    }
+  ],
+  "auth": {
+    "auth_type": "LDAP",
+    "security": "LDAPS",
+    "service_host": "bd-389ds-ldap1.mip.storage.hpecorp.net",
+    "service_port": "636",
+    "user_attribute": "cn",
+    "base_dn": "dc=mip,dc=storage,dc=hpecorp,dc=net",
+    "bind_dn": "cn=admin,dc=mip,dc=storage,dc=hpecorp,dc=net",
+    "bind_pwd": "admin123"
+  },
+  "hosts": {
+    "ip_list": "16.143.21.123,16.143.21.197,16.143.22.155",
+    "host_list": [
+      "mip-bd-vm170.mip.storage.hpecorp.net",
+      "mip-bd-vm251.mip.storage.hpecorp.net",
+      "mip-bdcs-vm30.mip.storage.hpecorp.net"
+    ],
+    "user": "root",
+    "password": "__HOST_PASSWD__",
+    "hosts_creation_max_timeout_seconds": 600
+  },
+  "clusters": [
+    {
+      "name": "vbcluster",
+      "kubernetes_version": "1.20",
+      "configure_auth": true,
+      "apps": {
+        "istio": true,
+        "kubeflow": true
+      },
+      "master_nodes": [
+        "mip-bd-vm251.mip.storage.hpecorp.net"
+      ],
+      "worker_nodes": [
+        "mip-bd-vm170.mip.storage.hpecorp.net",
+        "mip-bdcs-vm30.mip.storage.hpecorp.net"
+      ]
+    }
+  ],
+  "tenant": {
+    "name": "vbtenant",
+    "ext_auth": "cn=Eng,ou=Group,dc=mip,dc=storage,dc=hpecorp,dc=net",
+    "ext_auth_role": "Admin",
+    "user_name": "dev1",
+    "user_role": "Admin",
+    "add_secrets": true,
+    "namespace": "vbtenant"
+  },
+  "notebook": {
+    "name": "vb-notebook",
+    "command_execution_max_timeout": 600,
+    "creation_max_timeout_seconds": 7200,
+    "ram": 8,
+    "pvc": 128,
+    "yaml_data": [
+      {
+        "section": "clusters:",
+        "values": [
+          "- trainingengine",
+          "- vbmlflow"
+        ]
+      },
+      {
+        "section": "secrets:",
+        "values": [
+          "- mlflow-sc",
+          "- s3-cred"
+        ]
+      }
+    ]
+  },
+  "training": {
+    "name": "trainingengine",
+    "command_execution_max_timeout": 300,
+    "creation_max_timeout_seconds": 4200
+  },
+  "mlflow": {
+    "name": "vbmlflow",
+    "minio_bucket_name": "mlflow",
+    "command_execution_max_timeout": 300,
+    "creation_max_timeout_seconds": 3600
+  },
+  "jenkins": {
+    "url": "https://ez-jenkins.mip.storage.hpecorp.net:8443",
+    "_user": "jenkins",
+    "_password": "_jenkins_token_"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "controller_ip": "16.0.14.88",
+  "gateway": "89",
+  "masters": "90",
+  "workers": "91-96",
+  "prefix": "ak"
+}

@@ -1,0 +1,11 @@
+lxml
+pandas
+paramiko
+ping3
+pysqlite3
+pytest
+python-jenkins
+requests
+selenium
+transitions
+wheel

@@ -1,0 +1,9 @@
+#!/bin/bash
+USER=dev1
+export https_proxy=https://web-proxy.corp.hpecorp.net:8080
+TOKEN=$1
+cd /home/$USER/HPECP5.4
+git checkout -b $2
+git add .
+git commit -m 'Testing Done.'
+git push https://vivek-singh-bhadauriya:$TOKEN@github.hpe.com/vivek-singh-bhadauriya/HPECP5.4.git

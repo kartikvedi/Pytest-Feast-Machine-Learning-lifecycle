@@ -1,0 +1,59 @@
+node('master') {
+    currentBuild.displayName = "#${BUILD_ID} (${branch_name}) ${job_name} ECP #${ecp_build_id}"
+    currentBuild.description = "Get notebook hash..."
+    BUILD_NUMBER = 28
+    ECP_BUILD_ID = 0
+    CONFIG_ID = 0
+    try {
+        stage ('CreateConfig') {
+            def built = build job: 'CreateConfig', parameters: [
+                    [$class: 'StringParameterValue', name: 'controller_ip', value: params.controller_ip],
+                    [$class: 'StringParameterValue', name: 'gateway', value: params.gateway],
+                    [$class: 'StringParameterValue', name: 'workers', value: params.workers],
+                    [$class: 'StringParameterValue', name: 'masters', value: params.masters],
+                    [$class: 'StringParameterValue', name: 'prefix', value: params.prefix],
+                    [$class: 'StringParameterValue', name: 'ecp_build_id', value: params.ecp_build_id],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                ], wait: true
+            copyArtifacts fingerprintArtifacts: true, projectName: 'CreateConfig', selector: specific("${built.number}")
+            env.CONFIG_ID = built.number
+        }
+
+        stage('show dir') {
+            sh "pwd"
+            sh "ls -lr"
+            env.ECP_BUILD_ID = sh(
+                script: """grep platform_bin_url pyezml/platform_output.json | awk -F- '{print \$10}'|awk -F. '{print \$1}'""",
+                returnStdout: true
+             ).trim()
+            echo "ECP BUILD: ${env.ECP_BUILD_ID}"
+            currentBuild.displayName = "#${BUILD_ID} (${branch_name}) ${job_name} ECP #${params.ecp_build_id}->${env.ECP_BUILD_ID}"
+        }
+        
+        stage ('ExecuteJOB') {
+            currentBuild.description = "Start job... "
+            build job: params.job_name, parameters: [
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: "${env.CONFIG_ID}"],
+                    [$class: 'StringParameterValue', name: 'ecp_build_id', value: "${env.ECP_BUILD_ID}"],
+                ], wait: true
+            notebook_hash = sh(script: """
+                if [ -f "pyezml/pipeline.dat" ]; then
+                    cat pyezml/pipeline.dat
+                else
+                    echo "---"
+                fi
+             """, returnStdout: true).trim()
+
+            currentBuild.description = "NB: ${notebook_hash}"
+            currentBuild.displayName = "#${BUILD_ID} (${branch_name}) ${job_name} ECP #${ecp_build_id} NB:${notebook_hash}"
+        }
+ 
+    } catch (e){
+        throw e
+    } finally {
+        stage('Report'){
+            archiveArtifacts artifacts: 'pyezml/images/**/*.png, pyezml/platform_output.json, pyezml/*.log, pyezml/pipeline.dat', fingerprint: true, allowEmptyArchive: true
+        }
+    }
+}

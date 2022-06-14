@@ -1,0 +1,84 @@
+node('master'){
+    
+    build_ok = true
+    currentBuild.displayName = "#${BUILD_ID} ${Platform} (${branch_name}) ECP #${ecp_build_id}"
+       
+    try{
+        stage ('testXGBoost') {
+            build job: 'TestXGBoost', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_xgboost.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+
+    try{
+        stage ('testKFP') {
+            build job: 'TestKFP', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_kfp.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    try{
+        stage ('testNotebookExamples') {
+            build job: 'TestNotebookExamples', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_notebook.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    try{
+        stage ('testNotebookExamplesKF') {
+            build job: 'TestNotebookExamplesKF', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_notebook_examples_kf.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    try{
+        stage ('testMinio') {
+            build job: 'TestMinioExample', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_s3.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+
+    try{
+        stage ('testMLFlow') {
+            build job: 'TestMLFlow', parameters: [
+                    [$class: 'StringParameterValue', name: 'test_script', value: 'test_mlflow.py'],
+                    [$class: 'StringParameterValue', name: 'branch_name', value: params.branch_name],
+                    [$class: 'StringParameterValue', name: 'Platform', value: params.Platform],
+                ], wait: true
+        }
+    } catch(e) {
+        build_ok = false
+    }
+     
+    if(build_ok) {
+        currentBuild.result = "SUCCESS"
+    } else {
+        currentBuild.result = "FAILURE"
+    }
+}
